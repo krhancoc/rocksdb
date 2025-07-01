@@ -6387,6 +6387,9 @@ class Benchmark {
     const int64_t multiscan_size = FLAGS_multiscan_size;
     auto count_hist = std::make_shared<HistogramImpl>();
     ReadOptions options = read_options_;
+    options.async_io = true;
+    options.readahead_size = 16384 * 2;
+    options.use_direct_reads = true;
 
     Duration duration(FLAGS_duration, reads_);
     while (!duration.Done(1)) {
@@ -6420,7 +6423,6 @@ class Benchmark {
         for (auto it __attribute__((__unused__)) : rng) {
           keys++;
         }
-        count_hist->Add(1);
       }
 
       thread->stats.FinishedOps(nullptr, db, 1, kMultiScan);
@@ -6428,7 +6430,6 @@ class Benchmark {
 
     thread->stats.AddMessage("\nReported entry count stats (expected " +
                              std::to_string(scan_size) + "):");
-    thread->stats.AddMessage("\n" + count_hist->ToString());
   }
 
   void ApproximateMemtableStats(ThreadState* thread) {
