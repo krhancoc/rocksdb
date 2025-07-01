@@ -6389,6 +6389,8 @@ class Benchmark {
     const int64_t multiscan_size = FLAGS_multiscan_size;
     auto count_hist = std::make_shared<HistogramImpl>();
     ReadOptions options = read_options_;
+    options.async_io = true;
+    options.readahead_size = 16384 * 2;
 
     int64_t multiscans_done = 0;
 
