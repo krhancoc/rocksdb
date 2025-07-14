@@ -1598,8 +1598,19 @@ void LevelIterator::InitFileIterator(size_t new_file_index) {
 void LevelIterator::PrepareFileIterator(size_t new_file_index) {
   auto iter = NewFileIterator(new_file_index);
   prepared_iters[new_file_index] = iter;
+  for (size_t i = 0; i < scan_opts_->size(); i++) {
+    ScanOptions opts = (*scan_opts_)[i];
+    iter->Seek(opts.range.start.value());
+    if (iter->UpperBoundCheckResult() != IterBoundCheck::kInbound) {
+      continue;
+    } else {
+      break;
+    }
+  }
+
   iter->Prepare(scan_opts_);
 }
+
 }  // anonymous namespace
 
 Status Version::GetTableProperties(const ReadOptions& read_options,

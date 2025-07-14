@@ -84,7 +84,8 @@ class BlockBasedTableIterator : public InternalIteratorBase<Slice> {
   }
 
   void Prepare(const std::vector<ScanOptions>*) override {
-    SeekImpl(nullptr, true);
+    auto k = key();
+    SeekImpl(&k, true);
   }
 
   bool PrepareValue() override {
