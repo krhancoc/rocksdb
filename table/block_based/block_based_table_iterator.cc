@@ -180,6 +180,24 @@ void BlockBasedTableIterator::SeekImpl(const Slice* target,
   }
 }
 
+void BlockBasedTableIterator::Prepare(
+    const std::vector<ScanOptions>* scan_opts_) {
+  for (size_t i = 0; i < scan_opts_->size(); i++) {
+    ScanOptions opts = (*scan_opts_)[i];
+    auto k = opts.range.start.value();
+    SeekImpl(&k, true);
+    if (UpperBoundCheckResult() != IterBoundCheck::kInbound) {
+      continue;
+    } else {
+      // We call prepare here to force async prefetching
+      // Anything thats inbound at the start here lets assume we want to be
+      // prefetched We have to check multiple scan_opts as we may have a two
+      // scan opts on a single file.
+      break;
+    }
+  }
+}
+
 void BlockBasedTableIterator::SeekForPrev(const Slice& target) {
   direction_ = IterDirection::kBackward;
   ResetBlockCacheLookupVar();
