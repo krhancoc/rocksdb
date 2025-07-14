@@ -6390,7 +6390,7 @@ class Benchmark {
     auto count_hist = std::make_shared<HistogramImpl>();
     ReadOptions options = read_options_;
     options.async_io = true;
-    options.readahead_size = 16384 * 2;
+    options.readahead_size = 1024 * 64;
 
     int64_t multiscans_done = 0;
 
