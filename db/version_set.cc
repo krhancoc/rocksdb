@@ -1102,9 +1102,14 @@ class LevelIterator final : public InternalIterator {
   }
 
   void Prepare(const std::vector<ScanOptions>* scan_opts) override {
+    // We assume here that scan_opts is sorted such that
+    // scan_opts[0].range.start < scan_opts[1].range.start
     scan_opts_ = scan_opts;
-    for (size_t i = 0; i < flevel_->num_files; i++) {
-      PrepareFileIterator(i);
+
+    if (scan_opts_ != nullptr) {
+      for (size_t i = 0; i < flevel_->num_files; i++) {
+        PrepareFileIterator(i);
+      }
     }
   }
 
@@ -1596,10 +1601,28 @@ void LevelIterator::InitFileIterator(size_t new_file_index) {
 }
 
 void LevelIterator::PrepareFileIterator(size_t new_file_index) {
-  auto iter = NewFileIterator(new_file_index);
-  prepared_iters[new_file_index] = iter;
-  // We first need to determine which opts belong to which iterator
-  iter->Prepare(scan_opts_);
+  if (scan_opts_ != nullptr && scan_opts_->size() > 0) {
+    auto iter = NewFileIterator(new_file_index);
+    prepared_iters[new_file_index] = iter;
+    // We assume the scan_opts is ordered by start range.
+    const std::vector<ScanOptions>& opts = *scan_opts_;
+    std::vector<ScanOptions> subset;
+    subset.reserve(opts.size());
+    // We first find the first scan_opts start key that is in the file.
+    for (size_t i = 0; i < opts.size(); i++) {
+      const FdWithKeyRange& cur_file = flevel_->files[new_file_index];
+      auto target = opts[i].range.start.AsPtr();
+      if (icomparator_.InternalKeyComparator::Compare(
+              *target, cur_file.smallest_key) >= 1 &&
+          icomparator_.InternalKeyComparator::Compare(
+              *target, cur_file.largest_key) < 0) {
+        subset.push_back(opts[i]);
+      }
+    }
+
+    // We first need to determine which opts belong to which iterator
+    iter->Prepare(&subset);
+  }
 }
 
 }  // anonymous namespace
