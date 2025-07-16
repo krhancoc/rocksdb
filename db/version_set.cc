@@ -1588,8 +1588,13 @@ void LevelIterator::InitFileIterator(size_t new_file_index) {
       // no need to change anything
     } else {
       file_index_ = new_file_index;
-      InternalIterator* iter = NewFileIterator(new_file_index);
-      SetFileIterator(iter);
+      if (prepared_iters.size() > new_file_index &&
+          prepared_iters[new_file_index] != nullptr) {
+        SetFileIterator(prepared_iters[new_file_index]);
+      } else {
+        InternalIterator* iter = NewFileIterator(new_file_index);
+        SetFileIterator(iter);
+      }
     }
   }
 }
