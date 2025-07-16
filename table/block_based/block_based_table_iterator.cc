@@ -184,7 +184,10 @@ void BlockBasedTableIterator::Prepare(
     const std::vector<ScanOptions>* scan_opts_) {
   // We assume the first key is in range
   if (scan_opts_ != nullptr && scan_opts_->size()) {
-    SeekImpl((*scan_opts_)[0].range.start.AsPtr(), true);
+    auto target = (*scan_opts_)[0].range.start.AsPtr();
+    auto internal_target =
+        InternalKey(*target, kMaxSequenceNumber, kValueTypeForSeek).Encode();
+    SeekImpl(&internal_target, true);
   }
 }
 

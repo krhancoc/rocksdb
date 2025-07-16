@@ -1606,10 +1606,10 @@ void LevelIterator::PrepareFileIterator(size_t new_file_index) {
     for (size_t i = 0; i < opts.size(); i++) {
       const FdWithKeyRange& cur_file = flevel_->files[new_file_index];
       auto target = opts[i].range.start.AsPtr();
-      if (icomparator_.InternalKeyComparator::Compare(
-              *target, cur_file.smallest_key) >= 1 &&
-          icomparator_.InternalKeyComparator::Compare(
-              *target, cur_file.largest_key) < 0) {
+      if (user_comparator_.Compare(*target,
+                                   ExtractUserKey(cur_file.largest_key)) <= 0 &&
+          user_comparator_.Compare(
+              *target, ExtractUserKey(cur_file.smallest_key)) >= 0) {
         subset.push_back(opts[i]);
       }
     }
